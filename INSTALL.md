@@ -74,11 +74,10 @@ bash practice.sh      # untimed practice mode
 
 ## macOS setup
 
-No WSL2 needed — the Mac terminal is already Unix-based. However,
-`setup.sh` only knows how to auto-install **Linux** binaries for `kind`,
-`kubectl`, and `etcdctl`. On macOS you must install these tools yourself
-first via Homebrew — `setup.sh` will detect they're already present and
-skip its (Linux-only) download step for each one.
+No WSL2 needed — the Mac terminal is already Unix-based. `setup.sh`
+detects macOS automatically and installs `kind`, `kubectl`, `helm`,
+`jq`, and `etcd` (for `etcdctl`) via Homebrew for you — you only need
+Docker Desktop and Homebrew itself in place first.
 
 ### 1. Install Docker Desktop for Mac
 
@@ -95,38 +94,30 @@ docker info
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
-### 3. Install required tools via Homebrew
+`setup.sh` checks for Homebrew up front and will exit with a clear message
+if it's missing — it won't try to fall back to anything else on macOS.
 
-```bash
-brew install kind kubectl helm jq etcd
-```
-
-> `etcd` is required here specifically because it bundles `etcdctl`
-> (used for Task 05 — etcd backup/restore). If you skip this,
-> `setup.sh` will silently install a Linux `etcdctl` binary that
-> cannot run on macOS and will fail only later, when you reach Task 05.
-
-### 4. Get this project onto your Mac
+### 3. Get this project onto your Mac
 
 Clone or copy this folder anywhere, e.g.:
 
 ```bash
 cd ~/Desktop
-# git clone <your-repo-url> cka-simulator   (once pushed to GitHub)
+git clone <your-repo-url> cka-simulator
 cd cka-simulator
 ```
 
-### 5. Run setup (one time only)
+### 4. Run setup (one time only)
 
 ```bash
-bash setup.sh
+./setup.sh
 ```
 
-Since `kind`, `kubectl`, `etcdctl`, and `jq` are already on your `PATH` from
-Homebrew, `setup.sh` will skip its own installers and go straight to creating
-the 4 local Kubernetes clusters.
+`setup.sh` checks for `kind`, `kubectl`, `helm`, `jq`, and `etcdctl` on
+your `PATH` and runs `brew install` for whichever ones are missing, then
+creates the 4 local Kubernetes clusters. Nothing to install by hand.
 
-### 6. Load the exam environment (every new terminal session)
+### 5. Load the exam environment (every new terminal session)
 
 ```bash
 source .exam-env
@@ -149,7 +140,7 @@ bash practice.sh      # untimed practice mode
 | Docker Desktop | Must be running before `setup.sh` |
 | 8 GB+ RAM free | 4 clusters with multiple nodes each |
 | Python 3 | Used by some verification scripts |
-| Helm v3 | Required for Task 24 |
+| Helm v3 | Required for Task 24 — auto-installed via Homebrew on macOS; on WSL2/Ubuntu install from https://helm.sh/docs/intro/install/ |
 
 ---
 
@@ -189,9 +180,7 @@ Run `setup.sh` again any time to rebuild from scratch.
 - **`setup.sh` hangs on cluster creation** — usually not enough RAM/CPU
   allocated to Docker Desktop. Increase it in Docker Desktop → Settings →
   Resources.
-- **macOS: a command fails with "Exec format error"** — you ran `setup.sh`
-  before installing that tool via Homebrew, so it downloaded a Linux binary.
-  Fix: `brew install <tool>` the missing one, delete the broken binary from
-  `/usr/local/bin` or `/opt/homebrew/bin`, and re-run `setup.sh`.
+- **macOS: "Homebrew not found"** — install it from https://brew.sh, then
+  re-run `./setup.sh`.
 - **Windows: everything is very slow** — you're likely running from
   `/mnt/c/...`. Copy the project into the WSL2 filesystem (`~/`) instead.

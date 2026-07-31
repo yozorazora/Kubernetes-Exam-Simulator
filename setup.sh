@@ -25,6 +25,8 @@ ok()      { echo -e "${GREEN}[  ✓  ]${NC} $1"; }
 fail()    { echo -e "${RED}[  ✗  ]${NC} $1"; }
 warn()    { echo -e "${YELLOW}[ WARN ]${NC} $1"; }
 
+IS_MACOS=false
+
 check_os() {
     step "Checking operating system..."
 
@@ -33,7 +35,14 @@ check_os() {
 
     case "$kernel" in
         Darwin)
+            IS_MACOS=true
             ok "Running on macOS"
+            if ! command -v brew &>/dev/null; then
+                fail "Homebrew not found."
+                echo ""
+                echo "  Install it from https://brew.sh, then re-run this script."
+                exit 1
+            fi
             ;;
         Linux)
             if [ -r /etc/os-release ] && grep -qi '^ID=ubuntu' /etc/os-release; then
@@ -87,6 +96,13 @@ install_kind() {
         return
     fi
 
+    if [ "$IS_MACOS" = true ]; then
+        step "Installing kind via Homebrew..."
+        brew install kind
+        ok "kind installed: $(kind version | head -1)"
+        return
+    fi
+
     step "Installing kind v0.25.0..."
     local ARCH
     ARCH=$(uname -m)
@@ -105,6 +121,13 @@ install_kubectl() {
         return
     fi
 
+    if [ "$IS_MACOS" = true ]; then
+        step "Installing kubectl via Homebrew..."
+        brew install kubectl
+        ok "kubectl installed"
+        return
+    fi
+
     step "Installing kubectl v1.32.0..."
     local ARCH
     ARCH=$(uname -m)
@@ -117,9 +140,31 @@ install_kubectl() {
     ok "kubectl installed"
 }
 
+install_helm() {
+    if command -v helm &>/dev/null; then
+        ok "helm already installed: $(helm version --short 2>/dev/null)"
+        return
+    fi
+
+    if [ "$IS_MACOS" = true ]; then
+        step "Installing helm via Homebrew..."
+        brew install helm
+        ok "helm installed"
+        return
+    fi
+
+    warn "helm not found — required for Task 24. Install from https://helm.sh/docs/intro/install/"
+}
+
 install_extras() {
     # Install etcdctl (needed for etcd backup task)
-    if ! command -v etcdctl &>/dev/null; then
+    if command -v etcdctl &>/dev/null; then
+        ok "etcdctl already installed"
+    elif [ "$IS_MACOS" = true ]; then
+        step "Installing etcdctl via Homebrew..."
+        brew install etcd
+        ok "etcdctl installed"
+    else
         step "Installing etcdctl v3.5.17..."
         local ARCH
         ARCH=$(uname -m)
@@ -130,17 +175,19 @@ install_extras() {
             | tar xz -C /tmp
         sudo mv "/tmp/etcd-v3.5.17-linux-${ARCH}/etcdctl" /usr/local/bin/etcdctl
         ok "etcdctl installed"
-    else
-        ok "etcdctl already installed"
     fi
 
     # Install jq (needed for verify scripts)
-    if ! command -v jq &>/dev/null; then
+    if command -v jq &>/dev/null; then
+        ok "jq already installed"
+    elif [ "$IS_MACOS" = true ]; then
+        step "Installing jq via Homebrew..."
+        brew install jq
+        ok "jq installed"
+    else
         step "Installing jq..."
         sudo apt-get install -y jq &>/dev/null || sudo yum install -y jq &>/dev/null || true
         command -v jq &>/dev/null && ok "jq installed" || warn "jq install failed — some verify scripts may not work"
-    else
-        ok "jq already installed"
     fi
 }
 
@@ -269,6 +316,7 @@ main() {
     echo ""
     install_kind
     install_kubectl
+    install_helm
     install_extras
     echo ""
     step "Creating 4 Kubernetes clusters..."

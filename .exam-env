@@ -1,0 +1,25 @@
+# CKA Simulator — Exam Environment
+# Source this file: source ./cka-simulator/.exam-env
+
+# Core aliases matching what's available in the real CKA exam
+alias k='kubectl'
+complete -o default -F __start_kubectl k 2>/dev/null || true
+
+# Dry-run shortcut  (use: kubectl run pod1 --image=nginx $do)
+export do='--dry-run=client -o yaml'
+
+# Force delete      (use: kubectl delete pod mypod $now)
+export now='--force --grace-period=0'
+
+# Quick namespace switch
+kns() { kubectl config set-context --current --namespace="$1"; echo "Namespace set to $1"; }
+
+# Get events sorted
+kevents() { kubectl get events --sort-by='.lastTimestamp' "$@"; }
+
+export KUBECONFIG="$HOME/.kube/config-cka-simulator"
+
+echo "CKA exam environment loaded."
+echo "Clusters: k8s | hk8s | bk8s | wk8s"
+echo "Switch:   kubectl config use-context <name>"
+echo "Tip:      k get nodes --context=k8s"

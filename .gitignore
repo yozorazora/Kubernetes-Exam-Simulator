@@ -1,0 +1,8 @@
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local kubeconfig artifacts, if ever generated inside this folder
+*.kubeconfig
+config-cka-simulator

@@ -25,6 +25,43 @@ ok()      { echo -e "${GREEN}[  ✓  ]${NC} $1"; }
 fail()    { echo -e "${RED}[  ✗  ]${NC} $1"; }
 warn()    { echo -e "${YELLOW}[ WARN ]${NC} $1"; }
 
+check_os() {
+    step "Checking operating system..."
+
+    local kernel
+    kernel="$(uname -s)"
+
+    case "$kernel" in
+        Darwin)
+            ok "Running on macOS"
+            ;;
+        Linux)
+            if [ -r /etc/os-release ] && grep -qi '^ID=ubuntu' /etc/os-release; then
+                if grep -qi microsoft /proc/version 2>/dev/null; then
+                    ok "Running on Ubuntu (WSL2)"
+                else
+                    ok "Running on Ubuntu"
+                fi
+            else
+                fail "This script expects Ubuntu (via WSL2) on Windows, or macOS."
+                echo ""
+                echo "  Detected a non-Ubuntu Linux distro. This simulator is only"
+                echo "  tested against Ubuntu 22.04+ inside WSL2 (Windows) or macOS."
+                echo "  See INSTALL.md for supported setup instructions."
+                exit 1
+            fi
+            ;;
+        *)
+            fail "Unsupported environment: $kernel"
+            echo ""
+            echo "  Windows users: this script must run inside a WSL2 Ubuntu terminal"
+            echo "  (not Git Bash, Cygwin, PowerShell, or cmd.exe)."
+            echo "  See INSTALL.md → 'Windows setup (via WSL2)' to install WSL2 + Ubuntu first."
+            exit 1
+            ;;
+    esac
+}
+
 check_prerequisites() {
     step "Checking prerequisites..."
 
@@ -226,6 +263,8 @@ print_summary() {
 
 main() {
     header
+    check_os
+    echo ""
     check_prerequisites
     echo ""
     install_kind

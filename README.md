@@ -30,7 +30,7 @@ A local Kubernetes CKA (Certified Kubernetes Administrator) exam simulator that 
 
 ```bash
 # 1. Navigate to the simulator directory (in WSL2 terminal)
-cd /mnt/c/Users/yozor/Desktop/cka-simulator
+cd /mnt/c/Users/<yourusername>/Desktop/cka-simulator
 
 # 2. Run setup (installs kind, kubectl, etcdctl; creates 4 clusters)
 bash setup.sh
